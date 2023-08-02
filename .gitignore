@@ -1,2 +1,6 @@
 OldVersions/**/*
 external/OldVersions/**/*
+src/CMakeFiles/**/*
+src/*.cmake
+src/Makefile
+src/tau
