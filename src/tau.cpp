@@ -8,13 +8,22 @@ int main(void)
 {
   VideoCapture cap(0);
   Mat current_frame;
-  vector<Point> track;
 
   HOGDescriptor hog;
   hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
 
+  int frames = 0;
+  double time = 0;
+  int fps = 0;
+  char fpsText[8] = {0};
+
+  //namedWindow("tau", WINDOW_NORMAL);
+  //setWindowProperty("tau", WND_PROP_FULLSCREEN, WINDOW_FULLSCREEN);
+
   while (true)
   {
+    clock_t beginFrame = clock();
+
     cap >> current_frame;
 
     if (current_frame.empty())
@@ -24,7 +33,7 @@ int main(void)
     }
 
     Mat img = current_frame.clone();
-    resize(img, img, Size(img.cols * 2, img.rows * 2));
+    resize(img, img, Size(img.cols / 4, img.rows / 4));
 
     vector<Rect> found;
     vector<double> weights;
@@ -36,21 +45,38 @@ int main(void)
     {
       Rect r = found[i];
       rectangle(img, found[i], cv::Scalar(0, 0, 255), 3);
-
-      track.push_back(Point(
-        found[i].x + found[i].width / 2,
-        found[i].y + found[i].height / 2
-      ));
     }
 
-    // Plot the track
-    for (size_t i = 1; i < track.size(); i++)
-    {
-      line(img, track[i - 1], track[i], Scalar(255, 255, 0), 2);
-    }
+    // Draw FPS
+    putText(
+      img,
+      fpsText,
+      Point(340, 20),
+      FONT_HERSHEY_DUPLEX,
+      1,
+      Scalar(200, 200, 200, 255)
+    );
 
     // Present
-    imshow("Targets", img);
+    imshow("tau", img);
+    
+    // FPS counter
+    clock_t endFrame = clock();
+    clock_t delta = endFrame - beginFrame;
+    double milliseconds = delta * 1000.0 / CLOCKS_PER_SEC;
+
+    frames++;
+    time = time + milliseconds;
+
+    if (time >= 1000.0)
+    {
+      fps = frames * 1000.0 / time;
+      frames = 0;
+      time = 0.0;
+
+      sprintf(fpsText, "%d FPS", fps);
+    }
+
     waitKey(1);
   }
 
